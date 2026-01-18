@@ -245,6 +245,9 @@ def rank_action():
     new_rank = request.form.get('rank')
     my_weight = RANK_WEIGHTS.get(current_user.rank, 0)
     target_weight = RANK_WEIGHTS.get(new_rank, 0)
+    if my_weight == RANK_WEIGHTS.get('S-MODO', 130) and new_rank == 'operateur':
+        add_log("RANK", f"A essayé de mettre {target} au grade {new_rank}")
+        return jsonify({"response": "§cAction interdite."})
     if new_rank in ['gerant', 'administrateur'] and current_user.username != "Vanibels":
         add_log("RANK", f"A essayé de mettre {target} au grade {new_rank}")
         return jsonify({"response": "§cAction interdite."})
