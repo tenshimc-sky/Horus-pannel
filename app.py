@@ -369,4 +369,10 @@ def get_logs():
     } for l in logs])
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.debug = False
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    app.config['SQLALCHEMY_ECHO'] = False
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SECRET_KEY'] = 'Horus_Panel_4866/*-_7455_GHUIdfg'
+    app.run(debug=False, host='0.0.0.0', port=5000)
