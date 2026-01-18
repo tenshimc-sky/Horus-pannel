@@ -375,4 +375,4 @@ if __name__ == '__main__':
     app.config['SQLALCHEMY_ECHO'] = False
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = 'Horus_Panel_4866/*-_7455_GHUIdfg'
-    app.run(debug=False, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0')
