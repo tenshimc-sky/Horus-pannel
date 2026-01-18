@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BIG BROTHER | Admin</title>
+    <style>
+        :root { --aqua: #00FFFF; --dark: #050505; --card: #111; }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 300px; background: var(--card); border-right: 2px solid var(--aqua); padding: 20px; overflow-y: auto; }
+        .main { flex: 1; padding: 20px; display: flex; flex-direction: column; }
+        
+        .user-profile { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding: 10px; border: 1px solid #222; border-radius: 5px; }
+        .user-profile img { width: 50px; border: 2px solid var(--aqua); border-radius: 5px; }
+        
+        .warp-item { background: #1a1a1a; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--aqua); }
+        .console { flex: 1; background: #000; border: 1px solid #222; padding: 15px; font-family: monospace; color: var(--aqua); overflow-y: auto; }
+        
+        input { background: #000; border: 1px solid #333; color: white; padding: 8px; border-radius: 3px; margin-bottom: 5px; width: 90%; }
+        input:focus { border-color: var(--aqua); outline: none; }
+        .btn { background: var(--aqua); color: #000; border: none; padding: 8px 15px; cursor: pointer; font-weight: bold; width: 100%; }
+        .tp-btn { background: transparent; color: var(--aqua); border: 1px solid var(--aqua); margin-top: 5px; }
+        
+        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #222; border: 1px solid var(--aqua); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="user-profile">
+        <img src="https://minotar.net/helm/{{ pseudo }}/50" alt="Skin">
+        <div>
+            <strong>{{ pseudo }}</strong><br>
+            <span class="status-badge">{{ server.status }}</span>
+        </div>
+    </div>
+
+    <h4>📡 JOUEURS EN LIGNE ({{ server.count }})</h4>
+    <div style="margin-bottom: 20px;">
+        {% for p in players %}
+            <div style="font-size: 14px; margin: 5px 0;">🟢 {{ p }}</div>
+        {% endfor %}
+    </div>
+
+    <hr style="border-color:#222">
+
+    <h4>📍 WARPS ADMIN</h4>
+    <form action="/add_warp" method="POST">
+        <input type="text" name="name" placeholder="Nom du point">
+        <div style="display:flex; gap:2px;">
+            <input type="text" name="x" placeholder="X">
+            <input type="text" name="y" placeholder="Y">
+            <input type="text" name="z" placeholder="Z">
+        </div>
+        <button class="btn">AJOUTER</button>
+    </form>
+    <br>
+    {% for warp in warps %}
+    <div class="warp-item">
+        <strong>{{ warp.name }}</strong><br>
+        <small>{{ warp.coords }}</small><br>
+        <a href="/teleport/{{ warp.id }}"><button class="btn tp-btn">SE TÉLÉPORTER</button></a>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="main">
+    <h2 style="color: var(--aqua); margin: 0 0 10px 0;">BIG BROTHER CONSOLE</h2>
+    <div class="console" id="terminal">
+        [SYSTEM] Initialisation de la liaison aqua...<br>
+    </div>
+    <div style="margin-top:15px; display:flex; gap:10px;">
+        <input type="text" id="cmdInput" placeholder="Exécuter une commande RCON..." style="margin:0; flex:1;">
+        <button class="btn" onclick="sendCmd()" style="width:120px;">COMMAND</button>
+    </div>
+</div>
+
+<script>
+    function sendCmd() {
+        let cmd = document.getElementById('cmdInput').value;
+        fetch('/send_raw', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'command=' + encodeURIComponent(cmd)
+        })
+        .then(res => res.json())
+        .then(data => {
+            let term = document.getElementById('terminal');
+            term.innerHTML += `<br><span>> ${cmd}</span><br><span style="color:white">${data.response}</span>`;
+            term.scrollTop = term.scrollHeight;
+            document.getElementById('cmdInput').value = '';
+        });
+    }
+</script>
+
+</body>
+</html>

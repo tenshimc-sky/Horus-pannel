@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Inscription | Horus Panel</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='assets/horus.png') }}" type="image/x-icon">
+    <style>
+        :root { 
+            --accent: #00E0FF; 
+            --bg: #2E303F; 
+            --card: #232531; 
+            --input-bg: #1A1B26;
+            --text-muted: #8E92A4;
+        }
+        
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+
+        .register-box { 
+            background: var(--card); 
+            padding: 40px; 
+            border-radius: 12px; 
+            width: 360px; 
+            text-align: center; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-bottom: 4px solid var(--accent);
+        }
+
+        h2 { color: white; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        p { color: var(--text-muted); font-size: 13px; margin-bottom: 30px; }
+
+        .input-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: var(--accent); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+
+        input { 
+            background: var(--input-bg); 
+            border: 1px solid #3F4254; 
+            color: white; 
+            padding: 14px; 
+            width: 100%; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            transition: 0.2s;
+        }
+
+        input:focus { border-color: var(--accent); outline: none; background: #20212e; }
+
+        .btn-action { 
+            background: var(--accent); 
+            color: #1A1B26; 
+            border: none; 
+            padding: 16px; 
+            width: 100%; 
+            border-radius: 8px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .btn-action:hover { 
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 224, 255, 0.3); 
+        }
+
+        .footer-link { margin-top: 25px; font-size: 13px; color: var(--text-muted); }
+        .footer-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 224, 255, 0.1);
+        }
+
+        .flashes { color: #ff5555; font-size: 12px; margin-bottom: 15px; list-style: none; padding: 0; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <div class="register-box">
+        <div class="avatar-preview">
+            <img id="headPreview" src="https://minotar.net/helm/Steve/64" alt="Skin Head" style="width: 100%;">
+        </div>
+        
+        <h2>HORUS PANEL</h2>
+        <p>Création d'un accès opérateur</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}<ul class="flashes">{% for message in messages %}<li>{{ message }}</li>{% endfor %}</ul>{% endif %}
+        {% endwith %}
+
+        <form action="/register" method="POST">
+            <div class="input-group">
+                <label>Pseudo Minecraft</label>
+                <input type="text" name="username" id="usernameInput" placeholder="Ex: Vanibels" required autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-action">S'enregistrer</button>
+        </form>
+
+        <div class="footer-link">
+            Déjà inscrit ? <a href="/login">Se connecter</a>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('usernameInput');
+        const head = document.getElementById('headPreview');
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            head.src = val.length > 0 ? `https://minotar.net/helm/${val}/64` : `https://minotar.net/helm/Steve/64`;
+        });
+    </script>
+</body>
+</html>

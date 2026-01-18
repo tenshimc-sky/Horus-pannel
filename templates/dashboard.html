@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Horus Panel | Dashboard</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='assets/horus.png') }}" type="image/x-icon">
+    <style>
+        :root { 
+            --accent: #00E0FF; --bg: #2E303F; --sidebar: #232531; 
+            --card: #1A1B26; --muted: #8E92A4; --red: #FF5555; --green: #00FF88;
+        }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid #3F4254; }
+        .nav-btn { background: transparent; border: none; color: var(--muted); padding: 15px 20px; text-align: left; cursor: pointer; font-weight: 600; font-size: 12px; letter-spacing: 1px; transition: 0.2s; border-left: 3px solid transparent; text-transform: uppercase; }
+        .nav-btn.active { background: rgba(0, 224, 255, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+        .nav-btn:hover:not(.active) { background: rgba(255,255,255,0.05); }
+
+        /* CONTENT */
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
+
+        .card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; font-size: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--muted); font-size: 11px; padding: 10px; border-bottom: 1px solid #333; }
+        td { padding: 12px 10px; border-bottom: 1px solid #232531; font-size: 14px; }
+        input, select { background: #0D0E14; border: 1px solid #3F4254; color: white; padding: 10px; border-radius: 6px; outline: none; }
+        
+        .btn { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .btn-tool { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 8px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-right: 5px; margin-bottom: 5px; transition: 0.2s; }
+        .btn-tool:hover { background: var(--accent); color: #000; }
+
+        #terminal-out { background: #000; height: 300px; padding: 15px; font-family: monospace; overflow-y: auto; border-radius: 8px; color: #00FF88; line-height: 1.5; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div style="padding: 30px 20px; text-align: center;">
+        <img src="https://minotar.net/helm/{{ current_user.username }}/64" style="border: 2px solid var(--accent); border-radius: 12px; margin-bottom: 10px;">
+        <h3 style="margin: 0;">{{ current_user.username }}</h3>
+        <span style="color: var(--accent); font-size: 11px; font-weight: bold;">{{ current_user.rank|upper }}</span>
+    </div>
+    
+    <button class="nav-btn active" onclick="openTab(event, 'console')">💻 Console & Stats</button>
+    <button class="nav-btn" onclick="openTab(event, 'ranks_ig')">👑 Grades Joueurs</button>
+    <button class="nav-btn" onclick="openTab(event, 'warps')">📍 Gestion Warps</button>
+    
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant', 'vanibels'] %}
+        <div style="padding: 20px 20px 5px; font-size: 10px; color: #555; font-weight: bold;">ADMINISTRATION</div>
+        <button class="nav-btn" onclick="openTab(event, 'staff_req')" style="color: var(--green);">🛡️ Demandes Accès</button>
+    {% endif %}
+
+    {% if current_user.rank in ['administrateur','responsable', 'gerant', 'vanibels'] %}
+        <button class="nav-btn" onclick="openTab(event, 'staff_mgmt')">👥 OPÉRATEURS</button>
+        <button class="nav-btn" onclick="loadLogs(); openTab(event, 'logs')">📂 Logs Système</button>
+    {% endif %}
+    
+    <a href="/logout" class="nav-btn" style="color: var(--red); margin-top: auto; border-top: 1px solid #3F4254;">🚪 DÉCONNEXION</a>
+</div>
+
+<div class="main">
+
+    <div id="console" class="tab-content active">
+        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+            <div class="card" style="flex: 1; margin-bottom: 0; text-align: center;">
+                <small style="color: var(--muted)">JOUEURS EN LIGNE</small>
+                <h1 style="margin: 5px 0; color: var(--accent)">{{ server.players_online }}/{{ server.players_max }}</h1>
+            </div>
+            <div class="card" style="flex: 1; margin-bottom: 0; text-align: center;">
+                <small style="color: var(--muted)">VERSION SERVEUR</small>
+                <h1 style="margin: 5px 0;">{{ server.version }}</h1>
+            </div>
+        </div>
+
+        <h2>Terminal Horus</h2>
+        <div class="card">
+            <div id="terminal-out">Système connecté. Prêt pour les instructions.</div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <input type="text" id="cmdInput" placeholder="Saisir une commande..." style="flex: 1;" onkeydown="if(event.key === 'Enter') sendToConsole(false)">
+                <button class="btn" onclick="sendToConsole(false)">Exécuter</button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn-tool" onclick="quickCmd('/v')">VANISH</button>
+                <button class="btn-tool" onclick="quickCmd('/staff')">STAFFMOD</button>
+                <button class="btn-tool" onclick="quickCmd('/gmc')">CRÉATIF</button>
+                <button class="btn-tool" onclick="quickCmd('/gms')">SURVIE</button>
+                <button class="btn-tool" onclick="quickCmd('/spec')">SPEC</button>
+                <button class="btn-tool" onclick="quickCmd('*/time set day')">JOUR</button>
+                <button class="btn-tool" onclick="quickCmd('*/time set night')">NUIT</button>
+                <hr style="border: 0; border-top: 1px solid #222; margin: 10px 0;">
+                <button class="btn-tool" onclick="promptBroadcast()">BROADCAST</button>
+                <button class="btn-tool" onclick="promptSpawn()">SPAWN [P]</button>
+                <button class="btn-tool" onclick="promptWeather()">WEATHER [DURÉE]</button>
+            </div>
+        </div>
+    </div>
+    <div id="warps" class="tab-content">
+    <h2>📍 Points de Téléportation (Multiverse)</h2>
+    
+    <div class="card">
+        <h3 style="margin-top: 0; font-size: 14px; color: var(--muted); text-transform: uppercase;">Créer un nouveau Warp</h3>
+        <form action="/add_warp" method="POST" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="name" placeholder="Nom du warp" style="flex: 2; min-width: 150px;" required>
+            <input type="text" name="world" placeholder="Monde (ex: world)" style="flex: 1; min-width: 100px;" required>
+            <input type="number" step="any" name="x" placeholder="X" style="flex: 0.5; min-width: 60px;" required>
+            <input type="number" step="any" name="y" placeholder="Y" style="flex: 0.5; min-width: 60px;" required>
+            <input type="number" step="any" name="z" placeholder="Z" style="flex: 0.5; min-width: 60px;" required>
+            <button type="submit" class="btn" style="white-space: nowrap;">➕ AJOUTER</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>NOM</th>
+                    <th>MONDE</th>
+                    <th>COORDONNÉES (X:Y:Z)</th>
+                    <th style="text-align: right;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in warps %}
+                <tr>
+                    <td><b style="color: var(--accent);">{{ w.name }}</b></td>
+                    <td><code style="color: #FFCC00;">{{ w.world }}</code></td>
+                    <td style="font-family: monospace; color: var(--muted);">{{ w.coords }}</td>
+                    <td style="text-align: right;">
+                        <a href="/teleport_warp/{{w.id}}" class="btn" style="padding: 6px 12px; font-size: 11px; text-decoration: none;">🚀 TP</a>
+                        <a href="/delete_warp/{{w.id}}" style="color: var(--red); margin-left: 15px; text-decoration: none; font-size: 18px; font-weight: bold;" title="Supprimer">×</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: var(--muted); padding: 20px;">Aucun point de téléportation enregistré.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+    <div id="ranks_ig" class="tab-content">
+    <h2>👑 Gestion des Grades In-Game</h2>
+    <div class="card">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="targetIG" placeholder="Pseudo du joueur (ex: Vanibels)" style="flex: 1; min-width: 200px;">
+            <select id="rankIG" style="flex: 1; min-width: 150px;">
+                {% for r in ranks %}
+                    <option value="{{ r }}">{{ r|upper }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn" onclick="applyRankIG()">Appliquer le Grade</button>
+        </div>
+        <div id="rankFeedback" style="margin-top: 15px; font-weight: bold;"></div>
+    </div>
+</div>
+
+<div id="staff_req" class="tab-content">
+    <h2>🛡️ Demandes d'approbation</h2>
+    <div class="card">
+        {% if pending %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>UTILISATEUR</th>
+                        <th style="text-align: right;">ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in pending %}
+                    <tr>
+                        <td><b>{{ u.username }}</b></td>
+                        <td style="text-align: right;">
+                            <a href="/approve/{{u.id}}" class="btn" style="background: var(--green); color: black; padding: 6px 12px; font-size: 11px; text-decoration: none;">ACCEPTER</a>
+                            <a href="/delete_user/{{u.id}}" style="color: var(--red); margin-left: 15px; text-decoration: none; font-weight: bold; font-size: 11px;">REFUSER</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p style="color: var(--muted); text-align: center;">Aucune demande en attente.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="staff_mgmt" class="tab-content">
+    <h2>👥 Gestion des Opérateurs Panel</h2>
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Grade Actuel</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in staff_members %}
+                <tr>
+                    <td><b>{{ u.username }}</b></td>
+                    <td>
+                        <select onchange="updateStaffRank('{{ u.id }}', this.value)" style="width: 100%;">
+                            {% for r in ranks %}
+                                <option value="{{ r }}" {% if u.rank == r %}selected{% endif %}>{{ r|upper }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="/remove_staff/{{u.id}}" style="color: var(--red); text-decoration: none; font-weight: bold; font-size: 11px;">RÉVOQUER</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="logs" class="tab-content">
+    <h2>📂 Logs Système</h2>
+    <div class="card" style="max-height: 500px; overflow-y: auto; padding: 0;">
+        <table style="border-spacing: 0; width: 100%;">
+            <thead style="position: sticky; top: 0; background: var(--card); z-index: 1;">
+                <tr>
+                    <th style="padding: 15px;">HEURE</th>
+                    <th style="padding: 15px;">AUTEUR</th>
+                    <th style="padding: 15px;">ACTION / DÉTAILS</th>
+                </tr>
+            </thead>
+            <tbody id="logBody">
+                </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+
+
+<script>
+    function openTab(evt, tabId) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+    }
+
+    // --- SYSTÈME DE COMMANDES ---
+    function sendToConsole(isButton) {
+        let input = document.getElementById('cmdInput');
+        if(!input.value.trim()) return;
+        fetch('/console_handler', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `message=${encodeURIComponent(input.value)}&is_button=${isButton}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            let out = document.getElementById('terminal-out');
+            out.innerHTML += `<br><span style="color:var(--accent)">> ${data.user}:</span> ${data.msg}<br><span style="color:#888">${data.res}</span>`;
+            out.scrollTop = out.scrollHeight;
+            input.value = "";
+        });
+    }
+
+    function quickCmd(cmd) { document.getElementById('cmdInput').value = cmd; sendToConsole(true); }
+
+    // --- POPUPS COMMANDES ---
+    function promptBroadcast() {
+        let m = prompt("Message global à diffuser :");
+        if(m) { document.getElementById('cmdInput').value = "*/broadcast " + m; sendToConsole(true); }
+    }
+    function promptSpawn() {
+        let p = prompt("Pseudo du joueur à envoyer au spawn :");
+        if(p) { document.getElementById('cmdInput').value = "*/spawn " + p; sendToConsole(true); }
+    }
+    function promptSpec() {
+        let p = prompt("Pseudo du joueur à mettre en Spec :");
+        if(p) { document.getElementById('cmdInput').value = "/spec " + p; sendToConsole(true); }
+    }
+    function promptWeather() {
+        let t = prompt("Type (clear/rain/thunder) :", "clear");
+        let d = prompt("Durée en secondes :", "3600");
+        if(t && d) { document.getElementById('cmdInput').value = `*/weather ${t} ${d}`; sendToConsole(true); }
+    }
+
+    // --- AUTRES FONCTIONS ---
+    function applyRankIG() {
+        let t = document.getElementById('targetIG').value;
+        let r = document.getElementById('rankIG').value;
+        fetch('/rank_action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `target=${t}&rank=${r}`
+        }).then(res => res.json()).then(data => {
+            document.getElementById('rankFeedback').innerHTML = `<span style="color:var(--green)">${data.response}</span>`;
+        });
+    }
+
+    function updateStaffRank(id, rank) {
+        let fd = new FormData(); fd.append('user_id', id); fd.append('rank', rank);
+        fetch('/update_staff_rank', { method: 'POST', body: fd })
+        .then(res => res.json()).then(data => { if(data.status === 'error') alert(data.msg); location.reload(); });
+    }
+
+    function loadLogs() {
+        fetch('/get_logs').then(res => res.json()).then(data => {
+            let html = '';
+            data.reverse().forEach(l => {
+                html += `<tr><td style="color:var(--muted); width:150px;">${l.time}</td><td style="color:var(--accent)">${l.user}</td><td>${l.info}</td></tr>`;
+            });
+            document.getElementById('logBody').innerHTML = html;
+        });
+    }
+</script>
+</body>
+</html>

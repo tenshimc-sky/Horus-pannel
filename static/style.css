@@ -1,0 +1,54 @@
+:root {
+    --aqua: #00FFFF;
+    --red: #FF0033;
+    --bg: #000000;
+    --panel: #0a0a0a;
+    --border: #1a1a1a;
+}
+
+body {
+    background-color: var(--bg);
+    background-image: linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 3px; /* Effet scanline */
+    color: #fff;
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+.sidebar {
+    background: var(--panel);
+    border-right: 2px solid var(--aqua);
+    box-shadow: 5px 0 15px rgba(0, 255, 255, 0.1);
+}
+
+.nav-btn {
+    border-left: 2px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+}
+
+.nav-btn:hover {
+    color: var(--aqua);
+    text-shadow: 0 0 8px var(--aqua);
+    background: rgba(0, 255, 255, 0.05);
+    border-left: 2px solid var(--aqua);
+}
+
+.console-box {
+    border: 1px solid var(--border);
+    background: #050505;
+    box-shadow: inset 0 0 10px #000;
+}
+
+/* Boutons de style Terminal */
+.btn {
+    background: transparent;
+    border: 1px solid var(--aqua);
+    color: var(--aqua);
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.2);
+}
+
+.btn:hover {
+    background: var(--aqua);
+    color: #000;
+}
