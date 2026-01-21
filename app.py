@@ -4,12 +4,11 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from mcrcon import MCRcon
 from mcstatus import JavaServer
 from datetime import datetime
-import requests
-import random
 from werkzeug.security import generate_password_hash, check_password_hash
+import config
 
 app = Flask(__name__)
-app.secret_key = "Horus_Panel_4866/*-_7455_GHUIdfg"
+app.secret_key = config.SECRET_KEY
 
 # --- CONFIG ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///admin_panel.db'
@@ -19,19 +18,10 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Identifiants RCON
-RCON_DATA = {'host': '91.197.6.25', 'pass': 'ghui59AHGH*/65qfg', 'port': 47098}
+RCON_DATA = config.RCON_DATA
 
 # Hiérarchie des grades (basée sur tes logs LuckPerms)
-RANK_WEIGHTS = {
-    'vanibels': 300,
-    'gerant': 200, 'administrateur': 190, 'responsable': 180, 'haut-staff': 175,
-    'developpeur': 170, 'graphiste': 160, 'builder': 150, 'creation': 140,
-    'communication': 130, 's-modo': 130, 'operateur': 125, 'moderateur_prime': 122,
-    'moderateur': 120, 'assistant_prime': 115, 'assistant': 110, 'staff': 105,
-    'superstar': 50, 'divin_prime': 47, 'divin': 45, 'empereur_prime': 45,
-    'empereur': 40, 'shogun_prime': 35, 'shogun': 30, 'bushi_prime': 25,
-    'bushi': 20, 'daymio_prime': 15, 'daymio': 10, 'default_prime': 5, 'default': 0
-}
+RANK_WEIGHTS = config.RANK_WEIGHTS
 
 # --- NOUVEAU MODÈLE ---
 class Log(db.Model):
@@ -60,22 +50,21 @@ class User(UserMixin, db.Model):
 def setup_initial_admin():
     with app.app_context():
         db.create_all()
-        # On vérifie si Vanibels existe
-        admin = db.session.execute(db.select(User).filter_by(username="Vanibels")).scalar_one_or_none()
+        admin = db.session.execute(db.select(User).filter_by(username=config.PANEL_ADMIN['pseudo'])).scalar_one_or_none()
         
         if not admin:
-            print("(!) Création du compte Vanibels...")
-            hashed_pw = generate_password_hash("ton_mot_de_passe", method='pbkdf2:sha256')
+            print("(!) Création du compte Administrateur...")
+            hashed_pw = generate_password_hash(config.PANEL_ADMIN['password'], method='pbkdf2:sha256')
             
             new_admin = User(
-                username="Vanibels",
+                username=config.PANEL_ADMIN['pseudo'],
                 password=hashed_pw,
-                rank="vanibels",
+                rank="gerant",
                 is_approved=True
             )
             db.session.add(new_admin)
             db.session.commit()
-            print("(v) Compte Vanibels prêt.")
+            print(f"(v) Compte {config.PANEL_ADMIN['pseudo']} prêt.")
 
 # --- 3. Enfin l'appel (TOUJOURS après la classe User) ---
 setup_initial_admin()
@@ -85,41 +74,16 @@ class AdminWarp(db.Model):
     coords = db.Column(db.String(100))
     world = db.Column(db.String(50), default='admin')
 
-with app.app_context():
-    db.create_all()
-    # Création forcée de Vanibels
-    if not User.query.filter_by(username="Vanibels").first():
-        admin = User(username="Vanibels", password="G58BLxu8v9", is_approved=True, rank='gerant')
-        db.session.add(admin)
-        db.session.commit()
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
-
-def send_discord_code(user_discord_id, code):
-    token = "MTM4Njc0NzI2ODA5NDQ5Njg2OA.GUHgdL.UtXGamNWoN0XO98iU16hZlREzHmYS-D7MlXZ6w"
-    headers = {"Authorization": f"Bot {token}", "Content-Type": "application/json"}
-    
-    chan_res = requests.post("https://discord.com/api/v10/users/@me/channels", 
-                             json={"recipient_id": user_discord_id}, headers=headers)
-    
-    if chan_res.status_code == 200:
-        channel_id = chan_res.json()['id']
-        msg_data = {
-            "content": f"🛡️ **[PANEL Horus]**\nVoici ton code de sécurité : `{code}`\nCe code expire dans 5 minutes."
-        }
-        requests.post(f"https://discord.com/api/v10/channels/{channel_id}/messages", 
-                      json=msg_data, headers=headers)
         
 @app.before_request
 def monitor_ip():
     if current_user.is_authenticated:
-        # On stocke l'IP dans la session lors de la première connexion
         if 'last_ip' not in session:
             session['last_ip'] = request.remote_addr
-        
-        # Si l'IP change (même d'un chiffre), on déconnecte tout
         if session['last_ip'] != request.remote_addr:
             logout_user()
             session.clear()
@@ -142,8 +106,6 @@ def send_rcon(cmd):
         with MCRcon(RCON_DATA['host'], RCON_DATA['pass'], port=RCON_DATA['port']) as mcr:
             return mcr.command(cmd)
     except: return "§cErreur: Serveur Inaccessible"
-
-# --- ROUTES ---
 
 @app.route('/')
 @login_required
@@ -188,7 +150,7 @@ def register():
             new_user = User(
                 username=username, 
                 password=hashed_pw,
-                is_approved=False # Doit être validé par Vanibels
+                is_approved=False
             )
             db.session.add(new_user)
             db.session.commit()
@@ -340,7 +302,7 @@ def remove_staff(uid):
     target_power = RANK_WEIGHTS.get(user_to_del.rank, 0)
 
     if (my_power > target_power and my_power >= RANK_WEIGHTS.get('responsable', 90)) or current_user.username == "Vanibels":
-        if user_to_del.username != "Vanibels":
+        if user_to_del.username != config.PANEL_ADMIN['pseudo']:
             add_log("STAFF_DEL", f"A supprimé l'accès de {user_to_del.username}")
             db.session.delete(user_to_del)
             db.session.commit()
@@ -357,7 +319,7 @@ def delete_warp(id):
 @app.route('/get_logs')
 @login_required
 def get_logs():
-    if current_user.rank not in ['vanibels', 'gerant', 'administrateur', 'responsable']:
+    if current_user.rank not in ['gerant', 'administrateur', 'responsable']:
         return jsonify([])
     
     logs = Log.query.order_by(Log.timestamp.desc()).limit(100).all()
