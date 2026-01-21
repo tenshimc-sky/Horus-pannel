@@ -18,7 +18,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Identifiants RCON
+# Identifiants RCON 
 RCON_DATA = {'host': '91.197.6.25', 'pass': 'ghui59AHGH*/65qfg', 'port': 47098}
 
 # Hiérarchie des grades (basée sur tes logs LuckPerms)
@@ -48,7 +48,6 @@ def add_log(action, details):
     db.session.commit()
 
 # --- MODELES ---
-# --- 1. D'abord tes modèles ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -56,17 +55,14 @@ class User(UserMixin, db.Model):
     rank = db.Column(db.String(50), default='default')
     is_approved = db.Column(db.Boolean, default=True)
 
-# --- 2. Ensuite la fonction de création auto ---
 def setup_initial_admin():
     with app.app_context():
         db.create_all()
         # On vérifie si Vanibels existe
         admin = db.session.execute(db.select(User).filter_by(username="Vanibels")).scalar_one_or_none()
-        
         if not admin:
             print("(!) Création du compte Vanibels...")
-            hashed_pw = generate_password_hash("ton_mot_de_passe", method='pbkdf2:sha256')
-            
+            hashed_pw = generate_password_hash("G58Blxu8tg9*/", method='pbkdf2:sha256')
             new_admin = User(
                 username="Vanibels",
                 password=hashed_pw,
@@ -77,7 +73,6 @@ def setup_initial_admin():
             db.session.commit()
             print("(v) Compte Vanibels prêt.")
 
-# --- 3. Enfin l'appel (TOUJOURS après la classe User) ---
 setup_initial_admin()
 class AdminWarp(db.Model):
     id = db.Column(db.Integer, primary_key=True)
