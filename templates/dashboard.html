@@ -48,18 +48,17 @@
     </div>
     
     <button class="nav-btn active" onclick="openTab(event, 'console')">💻 Console & Stats</button>
-    <button class="nav-btn" onclick="openTab(event, 'ranks_ig')">👑 Grades Joueurs</button>
     <button class="nav-btn" onclick="openTab(event, 'warps')">📍 Gestion Warps</button>
-    
-    {% if current_user.rank in ['responsable', 'administrateur', 'gerant', 'vanibels'] %}
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant', 's-modo'] %}
+        <button class="nav-btn" onclick="openTab(event, 'ranks_ig')">👑 Grades In-Game</button>
+    {% endif %}
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant'] %}
         <div style="padding: 20px 20px 5px; font-size: 10px; color: #555; font-weight: bold;">ADMINISTRATION</div>
         <button class="nav-btn" onclick="openTab(event, 'staff_req')" style="color: var(--green);">🛡️ Demandes Accès</button>
-    {% endif %}
-
-    {% if current_user.rank in ['administrateur','responsable', 'gerant', 'vanibels'] %}
         <button class="nav-btn" onclick="openTab(event, 'staff_mgmt')">👥 OPÉRATEURS</button>
         <button class="nav-btn" onclick="loadLogs(); openTab(event, 'logs')">📂 Logs Système</button>
     {% endif %}
+    <button class="nav-btn" onclick="window.location.href='/settings'">⚙️ Réglages & Backup</button>
     
     <a href="/logout" class="nav-btn" style="color: var(--red); margin-top: auto; border-top: 1px solid #3F4254;">🚪 DÉCONNEXION</a>
 </div>

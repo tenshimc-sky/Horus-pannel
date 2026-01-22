@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horus | Profil</title>
+    <style>
+        :root { 
+            --accent: #00E0FF; --bg: #2E303F; --sidebar: #232531; 
+            --card: #1A1B26; --muted: #8E92A4; --red: #FF5555; --green: #00FF88;
+        }
+        body { 
+            background: var(--bg); color: white; font-family: 'Inter', sans-serif; 
+            margin: 0; display: flex; height: 100vh; overflow: hidden; 
+        }
+        
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid #3F4254; }
+        .nav-btn { 
+            background: transparent; border: none; color: var(--muted); padding: 15px 20px; 
+            text-align: left; cursor: pointer; font-weight: 600; font-size: 11px; 
+            letter-spacing: 1px; transition: 0.2s; border-left: 3px solid transparent; 
+            text-transform: uppercase; text-decoration: none; display: block;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-btn.active { background: rgba(0, 224, 255, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+
+        /* CONTENU */
+        .main { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        .card { 
+            background: var(--card); padding: 30px; border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); width: 100%; max-width: 500px; 
+        }
+        
+        h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 25px; font-size: 18px; }
+        
+        input { 
+            background: #0D0E14; border: 1px solid #3F4254; color: white; 
+            padding: 12px; border-radius: 8px; margin-top: 5px; width: 100%; box-sizing: border-box;
+        }
+        input:focus { border-color: var(--accent); outline: none; }
+        
+        .btn { 
+            background: var(--accent); color: #000; border: none; padding: 15px; 
+            border-radius: 8px; font-weight: 800; cursor: pointer; width: 100%;
+            margin-top: 10px; transition: 0.3s;
+        }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        
+        label { color: var(--muted); font-size: 11px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+    <div style="padding: 30px 20px; text-align: center;">
+        <img src="https://minotar.net/helm/{{ current_user.username }}/64" style="border: 2px solid var(--accent); border-radius: 12px; margin-bottom: 10px;">
+        <h3 style="margin: 0;">{{ current_user.username }}</h3>
+        <span style="color: var(--accent); font-size: 11px; font-weight: bold;">{{ current_user.rank|upper }}</span>
+    </div>
+
+    <button class="nav-btn active" onclick="window.location.href='/'">💻 Panel</button>
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant'] %}
+        <button class="nav-btn" onclick="window.location.href='/logs_view'">📂 Logs [50]</button>
+    {% endif %}
+    <button class="nav-btn" onclick="window.location.href='/profile'">👤 Mon Profil</button>
+    <button class="nav-btn" onclick="window.location.href='/settings'">⚙️ Réglages & Backup</button>
+    
+    <a href="/logout" class="nav-btn" style="color: var(--red); margin-top: auto; border-top: 1px solid #3F4254;">🚪 DÉCONNEXION</a>
+    </div>
+
+<div class="main">
+    <div class="card">
+        <h2>👤 Mon Profil Horus</h2>
+        <form action="/profile" method="POST" style="display: flex; flex-direction: column; gap: 20px;">
+            <div>
+                <label>NOM D'UTILISATEUR</label>
+                <input type="text" name="username" value="{{ current_user.username }}" required>
+            </div>
+            <div>
+                <label>NOUVEAU MOT DE PASSE</label>
+                <input type="password" name="password" placeholder="Laisser vide pour ne pas changer">
+            </div>
+            <button type="submit" class="btn">SAUVEGARDER LES MODIFICATIONS</button>
+        </form>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <p style="color: var(--green); font-size: 13px; margin-top: 15px; text-align: center;">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+    </div>
+</div>
+
+</body>
+</html>

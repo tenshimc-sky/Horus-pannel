@@ -1,6 +1,6 @@
-SERVER_NAME = "Dev"
+SERVER_NAME = "Beta"
 
-RCON_DATA = {'host': '91.197.6.25', 'pass': 'ghui59AHGH*/65qfg', 'port': 47098}
+RCON_DATA = {'host': '91.197.6.201', 'pass': 'ghui59AHGH*/65qfg', 'port': 48393}
 
 RANK_WEIGHTS = {
     'vanibels': 300,

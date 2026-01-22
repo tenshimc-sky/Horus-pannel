@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horus | Logs</title>
+    <style>
+        :root { 
+            --accent: #00E0FF; --bg: #2E303F; --sidebar: #232531; 
+            --card: #1A1B26; --muted: #8E92A4; --red: #FF5555;
+        }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid #3F4254; }
+        .nav-btn { 
+            background: transparent; border: none; color: var(--muted); padding: 15px 20px; 
+            text-align: left; cursor: pointer; font-weight: 600; font-size: 11px; 
+            letter-spacing: 1px; transition: 0.2s; border-left: 3px solid transparent; 
+            text-transform: uppercase; text-decoration: none; display: block;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-btn.active { background: rgba(0, 224, 255, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        .card { background: var(--card); padding: 25px; border-radius: 12px; width: 100%; box-sizing: border-box; }
+        h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; color: var(--muted); font-size: 11px; padding: 15px; border-bottom: 2px solid #232531; }
+        td { padding: 12px 15px; border-bottom: 1px solid #232531; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+    <div style="padding: 30px 20px; text-align: center;">
+        <img src="https://minotar.net/helm/{{ current_user.username }}/64" style="border: 2px solid var(--accent); border-radius: 12px; margin-bottom: 10px;">
+        <h3 style="margin: 0;">{{ current_user.username }}</h3>
+        <span style="color: var(--accent); font-size: 11px; font-weight: bold;">{{ current_user.rank|upper }}</span>
+    </div>
+
+    <button class="nav-btn active" onclick="window.location.href='/'">💻 Panel</button>
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant'] %}
+        <button class="nav-btn" onclick="window.location.href='/logs_view'">📂 Logs [50]</button>
+    {% endif %}
+    <button class="nav-btn" onclick="window.location.href='/profile'">👤 Mon Profil</button>
+    <button class="nav-btn" onclick="window.location.href='/settings'">⚙️ Réglages & Backup</button>
+    
+    <a href="/logout" class="nav-btn" style="color: var(--red); margin-top: auto; border-top: 1px solid #3F4254;">🚪 DÉCONNEXION</a>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>📂 Historique des Actions & Erreurs</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>DATE</th>
+                        <th>UTILISATEUR</th>
+                        <th>ACTION / INFO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="color: var(--muted);">{{ log.timestamp }}</td>
+                        <td><b>{{ log.user }}</b></td>
+                        <td style="font-family: monospace; color: var(--accent);">{{ log.info }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

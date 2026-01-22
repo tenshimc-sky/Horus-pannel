@@ -1,0 +1,107 @@
+/* Palette de couleurs Horus */
+:root { 
+    --accent: #00E0FF; 
+    --bg: #2E303F; 
+    --sidebar: #232531; 
+    --card: #1A1B26; 
+    --muted: #8E92A4; 
+    --red: #FF5555; 
+    --green: #00FF88;
+}
+
+/* Style spécifique pour les formulaires de Profil */
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 500px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type="text"], input[type="password"] {
+    background: #0D0E14;
+    border: 1px solid #3F4254;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    outline: none;
+    transition: border 0.3s;
+}
+
+input:focus {
+    border-color: var(--accent);
+}
+
+/* Style pour la zone de danger (Settings) */
+.danger-zone {
+    border: 1px dashed var(--red);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+}
+
+.danger-zone h3 {
+    color: var(--red);
+    margin-top: 0;
+}
+
+/* Bouton de téléchargement spécial */
+.btn-download {
+    background: linear-gradient(135deg, var(--accent), #00A3FF);
+    color: #000 !important;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 800;
+    display: inline-block;
+    transition: transform 0.2s;
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 224, 255, 0.3);
+}
+
+/* Tableaux de logs épurés */
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.log-table th {
+    text-align: left;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 15px;
+    border-bottom: 2px solid #232531;
+}
+
+.log-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #232531;
+    font-size: 13px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-security { background: rgba(255, 85, 85, 0.1); color: var(--red); }
+.badge-info { background: rgba(0, 224, 255, 0.1); color: var(--accent); }

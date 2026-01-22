@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horus | Paramètres</title>
+    <style>
+        :root { 
+            --accent: #00E0FF; --bg: #2E303F; --sidebar: #232531; 
+            --card: #1A1B26; --muted: #8E92A4; --red: #FF5555; --green: #00FF88;
+        }
+        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 280px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid #3F4254; }
+        .nav-btn { 
+            background: transparent; border: none; color: var(--muted); padding: 15px 20px; 
+            text-align: left; cursor: pointer; font-weight: 600; font-size: 11px; 
+            letter-spacing: 1px; transition: 0.2s; border-left: 3px solid transparent; 
+            text-transform: uppercase; text-decoration: none; display: block;
+        }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+        .nav-btn.active { background: rgba(0, 224, 255, 0.1); color: var(--accent); border-left: 3px solid var(--accent); }
+        .main { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        .card { background: var(--card); padding: 30px; border-radius: 12px; width: 100%; max-width: 600px; }
+        h2 { color: var(--accent); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .btn { 
+            background: var(--accent); color: #000; border: none; padding: 12px 20px; 
+            border-radius: 8px; font-weight: 800; cursor: pointer; text-decoration: none; 
+            display: inline-block; transition: 0.3s; margin-top: 15px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 224, 255, 0.3); }
+        .danger-zone { border: 1px dashed var(--red); padding: 20px; border-radius: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+    <div style="padding: 30px 20px; text-align: center;">
+        <img src="https://minotar.net/helm/{{ current_user.username }}/64" style="border: 2px solid var(--accent); border-radius: 12px; margin-bottom: 10px;">
+        <h3 style="margin: 0;">{{ current_user.username }}</h3>
+        <span style="color: var(--accent); font-size: 11px; font-weight: bold;">{{ current_user.rank|upper }}</span>
+    </div>
+
+    <button class="nav-btn active" onclick="window.location.href='/'">💻 Panel</button>
+    {% if current_user.rank in ['responsable', 'administrateur', 'gerant'] %}
+        <button class="nav-btn" onclick="window.location.href='/logs_view'">📂 Logs [50]</button>
+    {% endif %}
+    <button class="nav-btn" onclick="window.location.href='/profile'">👤 Mon Profil</button>
+    <button class="nav-btn" onclick="window.location.href='/settings'">⚙️ Réglages & Backup</button>
+    
+    <a href="/logout" class="nav-btn" style="color: var(--red); margin-top: auto; border-top: 1px solid #3F4254;">🚪 DÉCONNEXION</a>
+    </div>
+
+    <div class="main">
+        <div class="card">
+            <h2>⚙️ Paramètres Système</h2>
+            <p style="color: var(--muted);">Gestion des données et sécurité du panel.</p>
+            
+            {% if current_user.rank in ['vanibels', 'gerant'] %}
+            <div class="danger-zone">
+                <h3 style="color: var(--red); margin-top: 0;">📥 Sauvegarde des données</h3>
+                <p style="font-size: 13px;">Télécharger une copie complète de la base de données SQLite (Joueurs, Warps, Logs).</p>
+                <a href="/download_db" class="btn">TÉLÉCHARGER LA DB (.DB)</a>
+            </div>
+            {% else %}
+            <p style="color: var(--red); font-weight: bold; margin-top: 20px;">🔒 Accès restreint au grade Gérant.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

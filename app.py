@@ -1,10 +1,13 @@
-from flask import abort, Flask, render_template, request, redirect, jsonify, url_for, flash, session
-from flask_sqlalchemy import SQLAlchemy
+from flask import abort, Flask, render_template, request, redirect, jsonify, url_for, flash, session, send_file
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from mcrcon import MCRcon
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
 from mcstatus import JavaServer
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+from mcrcon import MCRcon
+import os
+
+
 import config
 
 app = Flask(__name__)
@@ -45,6 +48,12 @@ class User(UserMixin, db.Model):
     rank = db.Column(db.String(50), default='default')
     is_approved = db.Column(db.Boolean, default=True)
 
+class AdminWarp(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    coords = db.Column(db.String(100))
+    world = db.Column(db.String(50), default='admin')
+
 def setup_initial_admin():
     with app.app_context():
         db.create_all()
@@ -65,12 +74,6 @@ def setup_initial_admin():
             print(f"(v) Compte {config.PANEL_ADMIN['pseudo']} prêt.")
 
 setup_initial_admin()
-class AdminWarp(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50))
-    coords = db.Column(db.String(100))
-    world = db.Column(db.String(50), default='admin')
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -231,6 +234,12 @@ def approve(uid):
         db.session.commit()
     return redirect(url_for('dashboard'))
 
+@app.route('/logs_view')
+@login_required
+def logs_view():
+    all_logs = Log.query.order_by(Log.id.desc()).limit(50).all()
+    return render_template('logs_view.html', logs=all_logs)
+
 @app.route('/delete_user/<int:uid>')
 @login_required
 def delete_user(uid):
@@ -294,10 +303,8 @@ def update_staff_rank():
 def remove_staff(uid):
     user_to_del = User.query.get(uid)
     if not user_to_del: return redirect(url_for('dashboard'))
-    
     my_power = RANK_WEIGHTS.get(current_user.rank, 0)
     target_power = RANK_WEIGHTS.get(user_to_del.rank, 0)
-
     if (my_power > target_power and my_power >= RANK_WEIGHTS.get('responsable', 90)) or current_user.username == "Vanibels":
         if user_to_del.username != config.PANEL_ADMIN['pseudo']:
             add_log("STAFF_DEL", f"A supprimé l'accès de {user_to_del.username}")
@@ -313,12 +320,12 @@ def delete_warp(id):
         db.session.delete(warp)
         db.session.commit()
     return redirect(url_for('dashboard'))
+
 @app.route('/get_logs')
 @login_required
 def get_logs():
     if current_user.rank not in ['gerant', 'administrateur', 'responsable']:
         return jsonify([])
-    
     logs = Log.query.order_by(Log.timestamp.desc()).limit(100).all()
     return jsonify([{
         "time": l.timestamp.strftime("%d/%m %H:%M"),
@@ -327,6 +334,43 @@ def get_logs():
         "info": l.details 
     } for l in logs])
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        new_username = request.form.get('username')
+        new_password = request.form.get('password')
+        if new_username != current_user.username:
+            exists = User.query.filter_by(username=new_username).first()
+            if exists:
+                flash("⚠️ Ce pseudo est déjà utilisé.")
+                return redirect(url_for('profile'))
+            current_user.username = new_username
+        if new_password:
+            current_user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+        db.session.commit()
+        add_log("PROFILE", "A mis à jour ses identifiants")
+        flash("✅ Profil mis à jour avec succès !")
+        return redirect(url_for('profile'))
+    return render_template('profile.html')
+
+@app.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')
+
+@app.route('/download_db')
+@login_required
+def download_db():
+    if current_user.rank not in ['gerant']:
+        add_log("SECURITY", "Tentative non autorisée de téléchargement de la DB")
+        return "Accès interdit", 403
+    
+    db_path = os.path.join(app.root_path, 'instance', 'admin_panel.db')
+    if not os.path.exists(db_path): # Test si le dossier instance est utilisé
+        db_path = os.path.join(app.root_path, 'admin_panel.db')
+        
+    return send_file(db_path, as_attachment=True)
 if __name__ == '__main__':
     app.debug = False
     app.config['TEMPLATES_AUTO_RELOAD'] = True
