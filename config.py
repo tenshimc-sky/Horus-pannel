@@ -1,8 +1,16 @@
 import os
+from dotenv import load_dotenv
 
-SERVER_NAME = os.environ.get["SERVER_NAME"]
+# Charge les variables du fichier .env
+load_dotenv()
 
-RCON_DATA = {'host': os.environ.get["RCON_DATA_HOST"], 'pass': os.environ.get["RCON_DATA_PASS"], 'port': os.environ.get["RCON_DATA_PORT"]}
+SERVER_NAME = os.environ.get("SERVER_NAME", "Horus Panel")
+
+RCON_DATA = {
+    'host': os.environ.get("RCON_DATA_HOST", "127.0.0.1"),
+    'pass': os.environ.get("RCON_DATA_PASS", ""),
+    'port': os.environ.get("RCON_DATA_PORT", "25575")
+}
 
 RANK_WEIGHTS = {
     'vanibels': 300,
@@ -15,6 +23,9 @@ RANK_WEIGHTS = {
     'bushi': 20, 'daymio_prime': 15, 'daymio': 10, 'default_prime': 5, 'default': 0
 }
 
-SECRET_KEY = os.environ.get["SECRET_KEY"]
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-key-placeholder-123")
 
-PANEL_ADMIN = {'pseudo' : os.environ.get["ADMIN_PSEUDO"], 'password' : os.environ.get["ADMIN_PASSWORD"]}
+PANEL_ADMIN = {
+    'pseudo': os.environ.get("ADMIN_PSEUDO", "Vanibels"),
+    'password': os.environ.get("ADMIN_PASSWORD", "password123")
+}
