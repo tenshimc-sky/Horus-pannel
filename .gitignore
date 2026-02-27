@@ -1,1 +1,5 @@
 .env
+env/
+instance/
+__pycache__/
+data/
