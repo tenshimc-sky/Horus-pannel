@@ -1,6 +1,8 @@
-SERVER_NAME = "Beta"
+import os
 
-RCON_DATA = {'host': '91.197.6.201', 'pass': 'ghui59AHGH*/65qfg', 'port': 48393}
+SERVER_NAME = os.environ.get["SERVER_NAME"]
+
+RCON_DATA = {'host': os.environ.get["RCON_DATA_HOST"], 'pass': os.environ.get["RCON_DATA_PASS"], 'port': os.environ.get["RCON_DATA_PORT"]}
 
 RANK_WEIGHTS = {
     'vanibels': 300,
@@ -13,6 +15,6 @@ RANK_WEIGHTS = {
     'bushi': 20, 'daymio_prime': 15, 'daymio': 10, 'default_prime': 5, 'default': 0
 }
 
-SECRET_KEY = "Horus_Panel_4866/*-_7455_GHUIdfg"
+SECRET_KEY = os.environ.get["SECRET_KEY"]
 
-PANEL_ADMIN = {'pseudo' : 'Vanibels', 'password' : 'G58BLxu8bv9'}
+PANEL_ADMIN = {'pseudo' : os.environ.get["ADMIN_PSEUDO"], 'password' : os.environ.get["ADMIN_PASSWORD"]}
