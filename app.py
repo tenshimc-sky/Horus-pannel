@@ -7,26 +7,33 @@ from datetime import datetime
 from mcrcon import MCRcon
 import os
 
-
 import config
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
 
-# --- CONFIG ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///horuss.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+database_url = os.environ.get("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL missing")
+
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+}
+
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Identifiants RCON
 RCON_DATA = config.RCON_DATA
-
-# Hiérarchie des grades
 RANK_WEIGHTS = config.RANK_WEIGHTS
 
-# --- MODÈLES ---
 class Log(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.now)
@@ -37,7 +44,7 @@ class Log(db.Model):
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False) # Augmenté à 255 pour plus de sécurité
+    password = db.Column(db.String(255), nullable=False)
     rank = db.Column(db.String(50), default='default')
     is_approved = db.Column(db.Boolean, default=True)
 
@@ -46,8 +53,6 @@ class AdminWarp(db.Model):
     name = db.Column(db.String(50))
     coords = db.Column(db.String(100))
     world = db.Column(db.String(50), default='admin')
-
-# --- FONCTIONS SYSTÈME ---
 
 def add_log(action, details):
     name = current_user.username if current_user.is_authenticated else "Système"
@@ -120,7 +125,6 @@ def dashboard():
         server_info = {"online": False, "players_online": 0, "players_max": -1, "version": "N/A"}
         players = []
 
-    # Utilisation de db.session.execute pour être plus propre avec SQLAlchemy 2.0
     warps = AdminWarp.query.all()
     staff_list = User.query.filter(User.username != "Vanibels", User.is_approved == True).all()
     pending_list = User.query.filter_by(is_approved=False).all()
@@ -179,10 +183,8 @@ def console_handler():
     if not msg: 
         return jsonify({"status": "empty"})
     user_rank = current_user.rank.lower()
-    # Restriction S-MODO / DEV
     if user_rank in ["s-modo", "developpeur"] and not is_button:
         return jsonify({"user": "SYSTÈME", "msg": msg, "res": "❌ Erreur: Commandes manuelles interdites pour ton rang."})
-    # Restriction RESPONSABLE
     forbidden_cmds = ["/stop", "/op", "/deop", "*/stop", "*/op", "*/deop", "/lp", "/luckperms", "*/lp", "*/luckperms"]
     if user_rank == "responsable":
         for forbidden in forbidden_cmds:
@@ -192,7 +194,6 @@ def console_handler():
     if user_rank not in allowed_ranks:
         return jsonify({"user": "SYSTÈME", "msg": msg, "res": "❌ Erreur: Commande interdite pour ton rang."})
 
-    # --- TRAITEMENT DES COMMANDES ---
     try:
         if msg.startswith('*/'):
             command = msg[2:]
@@ -386,18 +387,7 @@ def settings():
 @app.route('/download_db')
 @login_required
 def download_db():
-    if current_user.rank.lower() not in ['vanibels', 'gerant']:
-        add_log("SECURITY", "Tentative non autorisée de téléchargement de la DB")
-        return "Accès interdit", 403
-    possible_paths = [
-        os.path.join(app.root_path, 'horuss.db'),
-        os.path.join(app.root_path, 'instance', 'horuss.db'),
-        os.path.join(os.getcwd(), 'horuss.db')
-    ]
-    for path in possible_paths:
-        if os.path.exists(path):
-            return send_file(path, as_attachment=True)    
-    return "Base de données introuvable sur le disque", 404
+    return "Gone", 410
 
 if __name__ == '__main__':
     app.config.update(
