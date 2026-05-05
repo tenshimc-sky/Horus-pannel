@@ -17,7 +17,7 @@ mcrcon==0.7.0
 mcstatus==12.1.0
 mysql-connector-python==9.5.0
 PyMySQL==1.1.2
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 requests==2.32.5
 setuptools==80.9.0
 SQLAlchemy==2.0.45
